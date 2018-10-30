@@ -105,3 +105,7 @@ mongodb_root_backup_password: passw0rd
 
 # setParameter config
 mongodb_set_parameters:
+
+# sharding config
+mongodb_sharding_cluster_role:
+mongodb_sharding_archive_moved_chunks: false
