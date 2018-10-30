@@ -68,7 +68,7 @@ setParameter:
 {% endif %}
 
 {% if mongodb_sharding_cluster_role -%}
-replication:
+sharding:
   clusterRole: {{ mongodb_sharding_cluster_role }}
   archiveMovedChunks: {{ mongodb_sharding_archive_moved_chunks | to_nice_json }}
 {% endif %}
