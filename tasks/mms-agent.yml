@@ -1,14 +1,21 @@
 ---
 
 - name: Download MMS Agent (Debian)
-  get_url: url={{mongodb_mms_agent_pkg}} dest={{mongod_config_final.storage.dbPath}}/mms-agent.deb
+  get_url: url={{mongodb_mms_agent_pkg}} dest=/tmp/mms-agent.deb
   register: mongodb_mms_agent_loaded
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: Install MMS agent (Debian)
   apt:
-    deb: "{{mongodb_storage_dbpath}}/mms-agent.deb"
-  when: mongodb_mms_agent_loaded.changed #and (ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu')
+    deb: "/tmp/mms-agent.deb"
+  when: mongodb_mms_agent_loaded.changed
+
+- name: Install MMS agent service
+  copy: src=mongodb-mms-automation-agent.service dest=/lib/systemd/system/mongodb-mms-automation-agent.service owner=root group=root mode=0640
+
+- name: Add mongodb symlink for systemd
+  file: src=/lib/systemd/system/mongodb-mms-automation-agent.service dest=/etc/systemd/system/multi-user.target.wants/mongodb-mms-automation-agent.service state=link
+  notify: reload systemd
 
 - name: Configure the MMS agent pt. 1
   file: state=directory path=/etc/mongodb-mms owner={{mongodb_user}} group={{mongodb_user}} mode=0755
