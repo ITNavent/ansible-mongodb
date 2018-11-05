@@ -64,9 +64,6 @@ mongos_config_default:
   processManagement:
     fork: false
 
-  security:
-    authorization: disabled
-
   systemLog:
     destination: file
     logAppend: true

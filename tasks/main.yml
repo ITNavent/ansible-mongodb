@@ -27,7 +27,8 @@
 
 - name: Include replication and auth configuration
   include_tasks: replication_init_auth.yml
-  when: ( mongod_config_final.replication
+  when: ( mongod_enabled
+        and mongod_config_final.replication
         and mongod_config_final.replication.replSetName
         and mongod_config_final.replication.replSetName != ''
         and mongod_config_final.security
