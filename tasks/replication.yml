@@ -26,6 +26,6 @@
     host_type: "{{ item.host_type|default('replica') }}"
     hidden: "{{ item.hidden|default(false) }}"
     priority: "{{ item.priority|default(1.0) }}"
-  when: mongod_config_final.security and mongod_config_final.security.authorization == 'disabled'
+  when: ( not mongod_config_final.security is defined ) or mongod_config_final.security.authorization == 'disabled'
   with_items:
     - "{{ mongod_replication_params|default([]) }}"
