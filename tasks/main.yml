@@ -38,7 +38,8 @@
 
 - name: Include replication configuration
   include_tasks: replication.yml
-  when: ( mongod_config_final.replication
+  when: ( mongod_enabled
+        and mongod_config_final.replication
         and mongod_config_final.replication.replSetName
         and mongod_config_final.replication.replSetName != '' )
   tags: [mongodb]
