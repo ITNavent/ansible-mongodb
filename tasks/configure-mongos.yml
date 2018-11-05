@@ -21,7 +21,7 @@
 
 - name: mongos restart
   service: name={{ mongos_daemon_name }} state=restarted
-  when: (config_result_mongodb|changed and mongodb_manage_service)
+  when: (config_result_mongos|changed and mongodb_manage_service)
 
 - name: Ensure service is started
   service: name={{ mongos_daemon_name }} state=started
