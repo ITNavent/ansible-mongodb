@@ -1,20 +1,12 @@
 ---
 
-- name: set mongodb gid
-  group: name=mongodb gid={{ mongodb_gid }} state=present
-  when: mongodb_gid
-
-- name: set mongodb uid
-  user: name=mongodb uid={{ mongodb_uid }} group=mongodb state=present
-  when: mongodb_uid
-
-- name: reset mongodb folder and subfolders with new uid
+- name: reset mongod folder and subfolders with new uid
   file: path={{ mongod_config_final.storage.dbPath }} owner=mongodb group=mongodb follow=yes recurse=yes state=directory
   when: mongodb_uid
 
 - name: Create log dir if missing
   file: state=directory recurse=yes dest={{ mongod_config_final.systemLog.path |dirname }} owner={{ mongodb_user }} group={{mongodb_user}} mode=0755
-  when: mongodb_systemlog_destination == "file"
+  when: mongod_config_final.systemLog.destination == "file"
 
 - name: Check than logfile exists
   stat: path={{ mongod_config_final.systemLog.path }}
@@ -34,44 +26,20 @@
     owner: "{{ mongodb_user }}"
     recurse: yes
 
-- name: Configure mongodb
+- name: Configure mongod
   template: src=mongod.conf.j2 dest=/etc/mongod.conf backup=yes owner=root group=root mode=0644
-  register: config_result_mongodb
-  when: mongodb_enabled
+  register: config_result_mongod
 
-- name: Configure mongos
-  template: src=mongos.conf.j2 dest=/etc/mongos.conf backup=yes owner=root group=root mode=0644
-  register: config_result_mongos
-  when: mongos_enabled
-
-- name: mongodb restart
-  service: name={{ mongodb_daemon_name }} state=restarted
-  when: mongodb_enabled and config_result_mongodb|changed and mongodb_manage_service
-
-- name: mongos restart
-  service: name={{ mongos_daemon_name }} state=restarted
-  when: mongos_enabled and (config_result_mongodb|changed and mongodb_manage_service)
+- name: mongod restart
+  service: name={{ mongod_daemon_name }} state=restarted
+  when: config_result_mongod|changed and mongodb_manage_service
 
 - name: Ensure service is started
-  service: name={{ mongodb_daemon_name }} state=started
-  when: mongodb_enabled
+  service: name={{ mongod_daemon_name }} state=started
 
-- name: Ensure service is started
-  service: name={{ mongos_daemon_name }} state=started
-  when: mongos_enabled
-
-- name: Wait when mongodb is started
+- name: Wait when mongod is started
   wait_for:
     host: "{{ item }}"
     port: "{{ mongod_config_final.net.port }}"
     timeout: 120
   with_items: "{{ mongod_config_final.net.bindIp.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"
-  when: mongodb_enabled
-
-- name: Wait when mongos is started
-  wait_for:
-    host: "{{ item }}"
-    port: "{{ mongos_config_final.net.port }}"
-    timeout: 120
-  with_items: "{{ mongos_config_final.net.bindIp.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"
-  when: mongos_enabled

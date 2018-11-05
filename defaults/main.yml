@@ -21,11 +21,10 @@ mongodb_manage_service: true
 mongodb_user: "{{ 'mongod' if ('RedHat' == ansible_os_family) else 'mongodb' }}"
 mongodb_uid:
 mongodb_gid:
-mongodb_daemon_name: "{{ 'mongod' if ('mongodb-org' in mongodb_package) else 'mongodb' }}"
 
-## mongos
-mongos_daemon_name: 'mongos'
+mongod_daemon_name: "mongod"
 
+mongod_config: {}
 mongod_config_default:
   net:
     bindIp: 127.0.0.1
@@ -47,9 +46,34 @@ mongod_config_default:
     destination: file
     logAppend: true
     logRotate: "rename"
-    path: /var/log/mongodb/{{ mongodb_daemon_name }}.log
+    path: /var/log/mongodb/{{ mongod_daemon_name }}.log
 
 mongod_config_final: "{{ mongod_config_default | combine(mongod_config, recursive=True) }}"
+
+## mongos
+mongos_daemon_name: 'mongos'
+
+mongos_config: {}
+mongos_config_default:
+  net:
+    bindIp: 127.0.0.1
+    ipv6: false
+    maxIncomingConnections: 65536
+    port: 27017
+
+  processManagement:
+    fork: false
+
+  security:
+    authorization: disabled
+
+  systemLog:
+    destination: file
+    logAppend: true
+    logRotate: "rename"
+    path: /var/log/mongodb/{{ mongos_daemon_name }}.log
+
+mongos_config_final: "{{ mongos_config_default | combine(mongos_config, recursive=True) }}"
 
 # MMS Agent
 mongodb_mms_agent_pkg: https://mms.mongodb.com/download/agent/automation/mongodb-mms-automation-agent-manager_1.4.2.783-1_amd64.deb
