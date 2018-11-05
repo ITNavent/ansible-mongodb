@@ -8,25 +8,25 @@
     - "{{ ansible_os_family }}.yml"
 
 - name: Include installation tasks
-  include: "install.yml"
+  include_tasks: "install.yml"
   tags: [mongodb]
 
 - name: Include configure.yml
-  include: configure.yml
+  include_tasks: configure.yml
   tags: [mongodb]
 
 - name: Include configure-mongod.yml
-  include: configure-mongod.yml
+  include_tasks: configure-mongod.yml
   when: mongod_enabled
   tags: [mongodb]
 
 - name: Include configure-mongos.yml
-  include: configure-mongos.yml
+  include_tasks: configure-mongos.yml
   when: mongos_enabled
   tags: [mongodb]
 
 - name: Include replication and auth configuration
-  include: replication_init_auth.yml
+  include_tasks: replication_init_auth.yml
   when: ( mongod_config_final.replication
         and mongod_config_final.replication.replSetName
         and mongod_config_final.replication.replSetName != ''
@@ -36,7 +36,7 @@
   tags: [mongodb]
 
 - name: Include replication configuration
-  include: replication.yml
+  include_tasks: replication.yml
   when: ( mongod_config_final.replication
         and mongod_config_final.replication.replSetName
         and mongod_config_final.replication.replSetName != '' )
@@ -59,7 +59,7 @@
   tags: [mongodb]
 
 - name: Include authorization configuration
-  include: auth_initialization.yml
+  include_tasks: auth_initialization.yml
   when: ( mongod_config_final.security
           and mongod_config_final.security.authorization == 'enabled'
           and ( not mongod_config_final.replication
@@ -110,6 +110,6 @@
   tags: [mongodb]
 
 - name: Include MMS Agent configuration
-  include: mms-agent.yml
+  include_tasks: mms-agent.yml
   when: mongodb_mms_api_key != ""
   tags: [mongodb]
