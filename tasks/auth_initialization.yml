@@ -7,7 +7,7 @@
   when: mongodb_manage_service
 
 - name: wait MongoDB port is listening
-  wait_for: host=127.0.0.1 port="{{ mongodb_net_port }}" delay=5 state=started
+  wait_for: host=127.0.0.1 port="{{ mongod_config_final.net.port }}" delay=5 state=started
 
 - name: get pid of mongodb for non daemon mode
   shell: "pidof mongod"
@@ -26,7 +26,7 @@
     password: "{{ item.password }}"
     update_password: "{{ mongodb_user_update_password }}"
     roles: "{{ item.roles }}"
-    login_port: "{{ mongodb_net_port }}"
+    login_port: "{{ mongod_config_final.net.port }}"
   with_items:
     - {
       name: "{{ mongodb_user_admin_name }}",
@@ -42,11 +42,11 @@
     password: "{{ item.password }}"
     update_password: "{{ mongodb_user_update_password }}"
     roles: "{{ item.roles }}"
-    login_port: "{{ mongodb_net_port }}"
+    login_port: "{{ mongod_config_final.net.port }}"
   with_items:
     - {
       name: "{{ mongodb_root_admin_name }}",
-      password: "{{ mongodb_root_admin_password }}",
+      password: "{{ mongod_config_final }}",
       roles: "root"
       }
   no_log: true
@@ -58,7 +58,7 @@
     password: "{{ item.password }}"
     update_password: "{{ mongodb_user_update_password }}"
     roles: "{{ item.roles }}"
-    login_port: "{{ mongodb_net_port }}"
+    login_port: "{{ mongodb_config_final.net.port }}"
   with_items:
     - {
       name: "{{ mongodb_root_backup_name }}",
@@ -75,5 +75,5 @@
   when: mongodb_manage_service
 
 - name: Wait MongoDB port is listening
-  wait_for: host="{{ item }}" port="{{ mongodb_net_port }}" delay=5 state=started
-  with_items: "{{ mongodb_net_bindip.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"
+  wait_for: host="{{ item }}" port="{{ mongod_config_final.net.port }}" delay=5 state=started
+  with_items: "{{ mongod_config_final.net.bindIp.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"
