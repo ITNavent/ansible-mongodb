@@ -20,25 +20,6 @@
   when: mongod_enabled
   tags: [mongodb]
 
-- name: Include replication and auth configuration
-  include_tasks: replication_init_auth.yml
-  when: ( mongod_enabled
-        and mongod_config_final.replication is defined
-        and mongod_config_final.replication.replSetName is defined
-        and mongod_config_final.replication.replSetName != ''
-        and mongod_config_final.security
-        and mongod_config_final.security.authorization == 'enabled'
-        and mongodb_master is defined and mongodb_master )
-  tags: [mongodb]
-
-- name: Include replication configuration
-  include_tasks: replication.yml
-  when: ( mongod_enabled
-        and mongod_config_final.replication is defined
-        and mongod_config_final.replication.replSetName is defined
-        and mongod_config_final.replication.replSetName != '' )
-  tags: [mongodb]
-
 - name: Include security configuration
   include_tasks: security.yml
   when: ( mongod_config_final.security is defined
