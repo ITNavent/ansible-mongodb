@@ -1,0 +1,12 @@
+[Unit]
+Description=An object/document-oriented database
+Documentation=man:mongos(1)
+
+[Service]
+User=mongodb
+ExecStart=/usr/bin/mongos --config /etc/mongos.conf
+LimitNOFILE=65535
+LimitNPROC=65535
+
+[Install]
+WantedBy=multi-user.target

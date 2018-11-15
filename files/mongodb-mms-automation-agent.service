@@ -1,0 +1,12 @@
+[Unit]
+Description=An object/document-oriented database
+Documentation=man:mongodb-automation-agent(1)
+
+[Service]
+User=mongodb
+ExecStart=/opt/mongodb-mms-automation/bin/mongodb-mms-automation-agent -config /etc/mongodb-mms/automation-agent.config
+LimitNOFILE=65535
+LimitNPROC=65535
+
+[Install]
+WantedBy=multi-user.target

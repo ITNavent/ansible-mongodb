@@ -1,0 +1,68 @@
+---
+
+- name: Check where admin user already exists
+  command: >
+    mongo --quiet -u {{ mongodb_user_admin_name }} \
+          -p {{ mongodb_user_admin_password }} --port {{ mongod_config_final.net.port }} --eval 'db.version()' admin
+  register: mongodb_user_admin_check
+  changed_when: false
+  check_mode: no
+  ignore_errors: true
+  when: ( mongod_config_final.security
+          and mongod_config_final.security.authorization == 'enabled'
+          and ( not mongod_config_final.replication
+          or not mongod_config_final.replication.replSetName
+          or mongod_config_final.replication.replSetName == '') )
+  no_log: true
+  tags: [mongodb]
+
+- name: Include authorization configuration
+  include_tasks: auth_initialization.yml
+  when: ( mongod_config_final.security
+          and mongod_config_final.security.authorization == 'enabled'
+          and ( not mongod_config_final.replication
+          or not mongod_config_final.replication.replSetName
+          or mongod_config_final.replication.replSetName == '')
+          and mongodb_user_admin_check.rc != 0 )
+  tags: [mongodb]
+
+- name: create normal users with replicaset
+  mongodb_user_fixed:
+    database: "{{ item.database }}"
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    update_password: "{{ mongodb_user_update_password }}"
+    roles: "{{ item.roles }}"
+    login_user: "{{ mongodb_user_admin_name }}"
+    login_password: "{{ mongodb_user_admin_password }}"
+    login_port: "{{ mongodb_login_port|default(27017) }}"
+    login_host: "{{ mongodb_login_host|default('localhost') }}"
+  with_items:
+    - "{{ mongodb_users | default([]) }}"
+  when: ( mongod_config_final.replication
+        and mongod_config_final.replication.replSetName
+        and mongod_config_final.security
+        and mongod_config_final.security.authorization == 'enabled'
+        and mongodb_master is defined and mongodb_master )
+  no_log: true
+  tags: [mongodb]
+
+- name: create normal users without replicaset
+  mongodb_user_fixed:
+    database: "{{ item.database }}"
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    update_password: "{{ mongodb_user_update_password }}"
+    roles: "{{ item.roles }}"
+    login_user: "{{ mongodb_user_admin_name }}"
+    login_password: "{{ mongodb_user_admin_password }}"
+    login_port: "{{ mongod_config_final.net.port }}"
+  with_items:
+    - "{{ mongodb_users | default([]) }}"
+  when: ( mongod_config_final.security
+          and mongod_config_final.security.authorization == 'enabled'
+          and (not mongod_config_final.replication
+          or mongod_config_final.replication.replSetName
+          or mongod_config_final.replication.replSetName == '') )
+  no_log: true
+  tags: [mongodb]

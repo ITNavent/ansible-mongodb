@@ -1,0 +1,45 @@
+---
+
+- name: reset mongod folder and subfolders with new uid
+  file: path={{ mongod_config_final.storage.dbPath }} owner=mongodb group=mongodb follow=yes recurse=yes state=directory
+  when: mongodb_uid
+
+- name: Create log dir if missing
+  file: state=directory recurse=yes dest={{ mongod_config_final.systemLog.path |dirname }} owner={{ mongodb_user }} group={{mongodb_user}} mode=0755
+  when: mongod_config_final.systemLog.destination == "file"
+
+- name: Check than logfile exists
+  stat: path={{ mongod_config_final.systemLog.path }}
+  register: logfile_stat
+  when: mongod_config_final.systemLog.destination == "file"
+
+- name: Create log if missing
+  file: state=touch dest={{ mongod_config_final.systemLog.path }} owner={{ mongodb_user }} group={{ mongodb_user }} mode=0755
+  when: ( logfile_stat is defined
+        and not logfile_stat.stat.exists
+        and mongod_config_final.systemLog.destination == "file" )
+
+- name: Ensure dbpath directory
+  file:
+    path: "{{ mongod_config_final.storage.dbPath }}"
+    state: directory
+    owner: "{{ mongodb_user }}"
+    recurse: yes
+
+- name: Configure mongod
+  template: src=mongod.conf.j2 dest=/etc/mongod.conf backup=yes owner=root group=root mode=0644
+  register: config_result_mongod
+
+- name: mongod restart
+  service: name={{ mongod_daemon_name }} state=restarted
+  when: config_result_mongod|changed and mongodb_manage_service
+
+- name: Ensure service is started
+  service: name={{ mongod_daemon_name }} state=started
+
+- name: Wait when mongod is started
+  wait_for:
+    host: "{{ item }}"
+    port: "{{ mongod_config_final.net.port }}"
+    timeout: 120
+  with_items: "{{ mongod_config_final.net.bindIp.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"

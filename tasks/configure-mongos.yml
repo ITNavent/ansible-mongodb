@@ -1,0 +1,34 @@
+---
+
+- name: Create log dir if missing
+  file: state=directory recurse=yes dest={{ mongos_config_final.systemLog.path |dirname }} owner={{ mongodb_user }} group={{mongodb_user}} mode=0755
+  when: mongos_config_final.systemLog.destination == "file"
+
+- name: Check than logfile exists
+  stat: path={{ mongos_config_final.systemLog.path }}
+  register: logfile_stat
+  when: mongos_config_final.systemLog.destination == "file"
+
+- name: Create log if missing
+  file: state=touch dest={{ mongos_config_final.systemLog.path }} owner={{ mongodb_user }} group={{ mongodb_user }} mode=0755
+  when: ( logfile_stat is defined
+        and not logfile_stat.stat.exists
+        and mongos_config_final.systemLog.destination == "file" )
+
+- name: Configure mongos
+  template: src=mongos.conf.j2 dest=/etc/mongos.conf backup=yes owner=root group=root mode=0644
+  register: config_result_mongos
+
+- name: mongos restart
+  service: name={{ mongos_daemon_name }} state=restarted
+  when: (config_result_mongos|changed and mongodb_manage_service)
+
+- name: Ensure service is started
+  service: name={{ mongos_daemon_name }} state=started
+
+- name: Wait when mongos is started
+  wait_for:
+    host: "{{ item }}"
+    port: "{{ mongos_config_final.net.port }}"
+    timeout: 120
+  with_items: "{{ mongos_config_final.net.bindIp.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"
